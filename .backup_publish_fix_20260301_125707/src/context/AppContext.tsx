@@ -20,22 +20,25 @@ interface AppContextType {
   cartTotal: number;
   cartCount: number;
 
+  // Orders
   orders: Order[];
   addOrder: (order: Order) => void;
   updateOrderStatus: (orderId: string, status: "pending" | "confirmed") => void;
   deleteOrder: (orderId: string) => void;
 
+  // Bookings
   bookings: Booking[];
   addBooking: (booking: Booking) => void;
   deleteBooking: (bookingId: string) => void;
 
+  // Admin
   isAdmin: boolean;
   setIsAdmin: (v: boolean) => void;
 
+  // Products (shared via /api/products)
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   refreshProducts: () => Promise<void>;
-
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   addProduct: (product: Product) => Promise<void>;
@@ -60,7 +63,9 @@ function safeLoad<T>(key: string, fallback: T): T {
 }
 
 function safeSave(key: string, value: unknown) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
 }
 
 function hasAdminCookie(): boolean {
@@ -88,7 +93,7 @@ const pageToPath: Record<Page, string> = {
   book: "/book",
   cart: "/cart",
   admin: "/admin",
-  product: "/shop",
+  product: "/shop", // product needs an id route
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -104,6 +109,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [orders, setOrders] = useState<Order[]>(() => safeLoad<Order[]>(LS.orders, []));
   const [bookings, setBookings] = useState<Booking[]>(() => safeLoad<Booking[]>(LS.bookings, []));
 
+  // Only from cookie (prevents random users from seeing admin-only UI)
   const [isAdmin, setIsAdmin] = useState<boolean>(() => hasAdminCookie());
 
   const [products, setProducts] = useState<Product[]>(defaultProducts);
@@ -114,6 +120,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setCurrentPage = useCallback((page: Page) => router.push(pageToPath[page]), [router]);
 
+  // --- Products: load from server (shared store) ---
   const refreshProducts = useCallback(async () => {
     try {
       const res = await fetch("/api/products", { cache: "no-store" });
@@ -124,22 +131,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  useEffect(() => { refreshProducts(); }, [refreshProducts]);
+  useEffect(() => {
+    refreshProducts();
+  }, [refreshProducts]);
 
-  async function persistProducts(next: Product[]) {
+  const persistProducts = useCallback(async (next: Product[]) => {
     const res = await fetch("/api/products", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ products: next }),
     });
-
     if (!res.ok) {
-      const msg = await res.text().catch(() => "");
-      throw new Error(msg || `Save failed (HTTP ${res.status})`);
+      console.warn("Failed to persist products:", await res.text().catch(() => ""));
     }
-  }
+  }, []);
 
-  // Cart
+  // --- Cart ---
   const addToCart = useCallback((product: Product) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
@@ -165,68 +172,92 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const cartTotal = cart.reduce((s, i) => s + i.product.price * i.quantity, 0);
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
-  // Orders
+  // --- Orders ---
   const addOrder = useCallback((order: Order) => setOrders((prev) => [order, ...prev]), []);
   const updateOrderStatus = useCallback((orderId: string, status: "pending" | "confirmed") => {
     setOrders((prev) => prev.map((o) => (o.id === orderId ? ({ ...o, status } as Order) : o)));
   }, []);
-  const deleteOrder = useCallback((orderId: string) => setOrders((prev) => prev.filter((o) => o.id !== orderId)), []);
+  const deleteOrder = useCallback((orderId: string) => {
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+  }, []);
 
-  // Bookings
+  // --- Bookings ---
   const addBooking = useCallback((booking: Booking) => setBookings((prev) => [booking, ...prev]), []);
-  const deleteBooking = useCallback((bookingId: string) => setBookings((prev) => prev.filter((b) => b.id !== bookingId)), []);
+  const deleteBooking = useCallback((bookingId: string) => {
+    setBookings((prev) => prev.filter((b) => b.id !== bookingId));
+  }, []);
 
-  // Product CRUD + publish
-  const updateProduct = useCallback(async (product: Product) => {
-    const next = products.map((p) => (p.id === product.id ? product : p));
-    setProducts(next);
+  // --- Product CRUD (admin) ---
+  const updateProduct = useCallback(
+    async (product: Product) => {
+      setProducts((prev) => {
+        const next = prev.map((p) => (p.id === product.id ? product : p));
+        persistProducts(next);
+        return next;
+      });
+    },
+    [persistProducts]
+  );
 
-    try {
-      await persistProducts(next);
-      await refreshProducts();
-    } catch (e: any) {
-      alert("Could not publish products to server. " + (e?.message || ""));
-      await refreshProducts();
-    }
-  }, [products, refreshProducts]);
+  const deleteProduct = useCallback(
+    async (productId: string) => {
+      setProducts((prev) => {
+        const next = prev.filter((p) => p.id !== productId);
+        persistProducts(next);
+        return next;
+      });
+    },
+    [persistProducts]
+  );
 
-  const deleteProduct = useCallback(async (productId: string) => {
-    const next = products.filter((p) => p.id !== productId);
-    setProducts(next);
-
-    try {
-      await persistProducts(next);
-      await refreshProducts();
-    } catch (e: any) {
-      alert("Could not publish products to server. " + (e?.message || ""));
-      await refreshProducts();
-    }
-  }, [products, refreshProducts]);
-
-  const addProduct = useCallback(async (product: Product) => {
-    const next = [product, ...products];
-    setProducts(next);
-
-    try {
-      await persistProducts(next);
-      await refreshProducts();
-    } catch (e: any) {
-      alert("Could not publish products to server. " + (e?.message || ""));
-      await refreshProducts();
-    }
-  }, [products, refreshProducts]);
+  const addProduct = useCallback(
+    async (product: Product) => {
+      setProducts((prev) => {
+        const next = [product, ...prev];
+        persistProducts(next);
+        return next;
+      });
+    },
+    [persistProducts]
+  );
 
   return (
-    <AppContext.Provider value={{
-      currentPage, setCurrentPage,
-      selectedProduct, setSelectedProduct,
-      cart, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal, cartCount,
-      orders, addOrder, updateOrderStatus, deleteOrder,
-      bookings, addBooking, deleteBooking,
-      isAdmin, setIsAdmin,
-      products, setProducts, refreshProducts,
-      updateProduct, deleteProduct, addProduct,
-    }}>
+    <AppContext.Provider
+      value={{
+        currentPage,
+        setCurrentPage,
+
+        selectedProduct,
+        setSelectedProduct,
+
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        cartTotal,
+        cartCount,
+
+        orders,
+        addOrder,
+        updateOrderStatus,
+        deleteOrder,
+
+        bookings,
+        addBooking,
+        deleteBooking,
+
+        isAdmin,
+        setIsAdmin,
+
+        products,
+        setProducts,
+        refreshProducts,
+        updateProduct,
+        deleteProduct,
+        addProduct,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
