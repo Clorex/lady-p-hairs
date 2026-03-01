@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 100% 99%;
+    --foreground: 0 0% 16%;
+    --card: 0 100% 99%;
+    --card-foreground: 0 0% 16%;
+    --popover: 0 100% 99%;
+    --popover-foreground: 0 0% 16%;
+    --primary: 340 82% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 350 60% 95%;
+    --secondary-foreground: 340 82% 48%;
+    --muted: 350 40% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 350 60% 95%;
+    --accent-foreground: 340 82% 48%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 350 30% 90%;
+    --input: 350 30% 90%;
+    --ring: 340 82% 48%;
+    --radius: 0.625rem;
+    --sidebar-background: 0 100% 99%;
+    --sidebar-foreground: 0 0% 16%;
+    --sidebar-primary: 340 82% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 350 60% 95%;
+    --sidebar-accent-foreground: 340 82% 48%;
+    --sidebar-border: 350 30% 90%;
+    --sidebar-ring: 340 82% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .peony-gradient {
+    @apply bg-gradient-to-br from-peony-100 via-peony-200 to-peony-400;
+  }
+  .peony-gradient-dark {
+    @apply bg-gradient-to-br from-peony-400 via-peony-600 to-peony-700;
+  }
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-soft;
+  }
+  .glass-card-dark {
+    @apply bg-peony-700/90 backdrop-blur-md border border-peony-600/30 shadow-soft-lg;
+  }
+  .btn-peony {
+    @apply bg-gradient-to-r from-peony-400 to-peony-600 text-white font-medium 
+           px-6 py-3 rounded-2xl shadow-soft hover:shadow-glow 
+           transition-all duration-300 hover:scale-[1.02] active:scale-[0.98];
+  }
+  .btn-peony-outline {
+    @apply border-2 border-peony-400 text-peony-600 font-medium 
+           px-6 py-3 rounded-2xl hover:bg-peony-50 
+           transition-all duration-300 hover:scale-[1.02] active:scale-[0.98];
+  }
+  .input-peony {
+    @apply bg-white border border-peony-200 rounded-xl px-4 py-3 
+           focus:outline-none focus:ring-2 focus:ring-peony-300 focus:border-transparent
+           placeholder:text-gray-400 transition-all duration-200;
+  }
+  .card-peony {
+    @apply bg-white rounded-2xl shadow-soft border border-peony-100 
+           hover:shadow-soft-lg transition-all duration-300;
+  }
+  .text-gradient-peony {
+    @apply bg-gradient-to-r from-peony-400 to-peony-700 bg-clip-text text-transparent;
+  }
+  .nav-item-active {
+    @apply text-peony-600;
+  }
+  .nav-item-inactive {
+    @apply text-gray-400 hover:text-peony-400 transition-colors;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* Custom scrollbar for desktop */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #FFF8F6;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #F7B6C2, #E96A8D);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #E96A8D, #C2185B);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 430px) {
+  body {
+    @apply text-sm;
+  }
+}
+
+/* Animation utilities */
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+.animate-delay-400 {
+  animation-delay: 400ms;
+}
+.animate-delay-500 {
+  animation-delay: 500ms;
+}

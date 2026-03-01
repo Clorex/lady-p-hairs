@@ -1,0 +1,54 @@
+﻿@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap");
+
+/* Tailwind v4 */
+@import "tailwindcss";
+
+:root {
+  --background: 0 100% 99%;
+  --foreground: 0 0% 16%;
+  --card: 0 100% 99%;
+  --card-foreground: 0 0% 16%;
+  --popover: 0 100% 99%;
+  --popover-foreground: 0 0% 16%;
+  --primary: 340 82% 48%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 350 60% 95%;
+  --secondary-foreground: 340 82% 48%;
+  --muted: 350 40% 96%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 350 60% 95%;
+  --accent-foreground: 340 82% 48%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 350 30% 90%;
+  --input: 350 30% 90%;
+  --ring: 340 82% 48%;
+  --radius: 0.625rem;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: Inter, system-ui, sans-serif;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+h1,h2,h3,h4,h5,h6 { font-family: "Playfair Display", Georgia, serif; }
+
+@layer components {
+  .btn-peony {
+    @apply bg-gradient-to-r from-peony-400 to-peony-600 text-white font-medium
+      px-6 py-3 rounded-2xl shadow-soft hover:shadow-glow
+      transition-all duration-300 hover:scale-[1.02] active:scale-[0.98];
+  }
+  .text-gradient-peony { @apply bg-gradient-to-r from-peony-400 to-peony-700 bg-clip-text text-transparent; }
+}
+
+@layer utilities {
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
+  .safe-area-top { padding-top: env(safe-area-inset-top, 0px); }
+}
